@@ -1189,5 +1189,32 @@ get_include_file_name2(Binary, Ret) ->
             get_include_file_name2(Rem2, [erlang:binary_to_list(ModName) | Ret])
     end.
 
+%% 获取一个 hash 值
 hash_string() ->
     lists:flatten([io_lib:format("~2.16.0b", [X]) || <<X>> <= erlang:md5(term_to_binary({node(), make_ref(), os:timestamp()}))]).
+
+%% 进程创建统计
+process_create_analysis() ->
+    PidList = erlang:processes(),
+    InitCallList =
+        [begin
+             case erlang:process_info(Pid, dictionary) of
+                 {_, DictInfo} ->
+                     lists:keyfind('$initial_call', 1, DictInfo);
+                 _ ->
+                     false
+             end
+         end || Pid <- PidList],
+    NewInitCallList =
+        lists:foldl(fun({'$initial_call', Key}, AccInitCallList) ->
+            case lists:keyfind(Key, 1, AccInitCallList) of
+                {Key, Num} ->
+                    lists:keystore(Key, 1, AccInitCallList, {Key, Num + 1});
+                _ ->
+                    [{Key, 1} | AccInitCallList]
+            end;
+            (_, AccIn) ->
+                AccIn
+        end, [], InitCallList),
+    lists:reverse(lists:keysort(2, NewInitCallList)).
+
