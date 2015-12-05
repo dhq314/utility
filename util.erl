@@ -682,7 +682,8 @@ ip_str(_IP) ->
 %% -----------------------------------------------------------------
 %% 确保字符串类型为列表
 %% -----------------------------------------------------------------
-
+to_term(String) when is_list(String) ->
+    string_to_term(String);
 to_term(BinString) ->
     case bitstring_to_term(BinString) of
         undefined -> [];
@@ -1213,8 +1214,8 @@ process_create_analysis() ->
                 _ ->
                     [{Key, 1} | AccInitCallList]
             end;
-            (_, AccIn) ->
-                AccIn
+            (_, AccInitCallList) ->
+                AccInitCallList
         end, [], InitCallList),
     lists:reverse(lists:keysort(2, NewInitCallList)).
 
